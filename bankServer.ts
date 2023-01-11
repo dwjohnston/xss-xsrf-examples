@@ -1,6 +1,5 @@
 import express from "express"
 import cookieParser from "cookie-parser";
-import qs from "qs";
 
 
 const app = express();
@@ -63,8 +62,7 @@ app.get("/api/update-balance", (req, res) => {
         return; 
     }
 
-    //@ts-ignore
-    const queryParams = qs.parse(req.query);
+    const queryParams = req.query
     const {changeAmount} = queryParams;
 
     const changeAmountInt =  parseInt(changeAmount as string); 

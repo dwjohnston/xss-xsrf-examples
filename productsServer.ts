@@ -1,8 +1,13 @@
-import http from "http";
-import fs from "fs";
-import path from "path";
-import qs from "querystring";
+
+import express from "express"
+
 const url = require('url');
+const app = express();
+const port = 3001
+
+app.use(express.urlencoded({extended: true}));
+app.use(express.json()); 
+
 
 type Product = {
     id: string;
@@ -19,7 +24,9 @@ function renderMain(posts: Array<Product>, searchQuery?: string): string {
             </head>
             <body>
 
-                ${searchQuery && `<h2>Showing results for "${searchQuery}"</h2>`}
+                <h1>David's Ecommerce Store</h1>
+
+                ${searchQuery ? `<h2>Showing results for "${searchQuery}"</h2>` : ''}
 
 
                 ${posts.length === 0 ? `<p>No products found</p>` : ``}
@@ -66,25 +73,21 @@ const database: Array<Product> = [{
 ];
 
 
-const server = http.createServer(function (req, res) {
-    let reqUrl = req.url;
-    console.log("REQUESTED => ", reqUrl);
-
-
-    const queryObject = url.parse(req.url, true).query;
-
+app.get('/', (req, res) => {
+    
+    
+    const searchQuery = req.query.search as string | undefined; 
     let foundProducts = [] as Array<Product>;
-    if (queryObject.search) {
-        foundProducts = database.filter((v) => v.productName.includes(queryObject.search))
+    if (searchQuery) {
+        foundProducts = database.filter((v) => v.productName.includes(searchQuery ))
     }
-
-    res.writeHead(200, { "Content-Type": "text/html" });
-    res.end(renderMain(foundProducts, queryObject.search));
+    res.status(200).send(renderMain(foundProducts, searchQuery )); 
 
 
+}); 
 
-});
 
-const PORT = process.env.PORT || 8080;
-server.listen(PORT);
-  //the server object listens on port 8080
+app.listen(port, () => {
+    console.log(`Example app listening on port ${port}`)
+  })
+  

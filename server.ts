@@ -1,7 +1,5 @@
-import http from "http";
-import fs from "fs";
-import path from "path";
-import qs from "querystring";
+
+import express from "express"
 
 type Post = {
     id: string;
@@ -16,6 +14,7 @@ function renderMain(posts: Array<Post>): string {
 
             </head>
             <body>
+            <h1>David's Sweet Microblogging Platform</h1>
                 ${posts.reduce((acc, cur) => {
         return acc + `
                             <div id="${cur.id}">
@@ -52,46 +51,32 @@ const database: Array<Post> = [{
 ];
 
 
-const server = http.createServer(function (req, res) {
-    let reqUrl = req.url;
-    console.log("REQUESTED => ", reqUrl);
 
-    if (reqUrl === "/") {
-        if (req.method === "POST") {
-            var body = '';
+const app = express();
+const port = 3001
 
-            req.on('data', function (data) {
-                body += data;
+app.use(express.urlencoded({extended: true}));
+app.use(express.json()); 
 
-                // Too much POST data, kill the connection!
-                // 1e6 === 1 * Math.pow(10, 6) === 1 * 1000000 ~~~ 1MB
-                if (body.length > 1e6)
-                    req.connection.destroy();
-            });
+app.get('/', (req, res) => {
+    res.status(200).send(renderMain(database)); 
+}); 
 
-            req.on('end', function () {
-                const post = qs.parse(body);
+app.post('/', (req, res) => {
 
 
-                if (post.content && typeof post.content === "string") {
-                    database.push({
-                        content: post.content,
-                        id: `${Math.random()}`
-                    });
+    const post = req.body;
+    database.push({
+        content: post.content,
+        id: `${Math.random()}`
+    });
+    res.status(201).send(renderMain(database)); 
 
-                    res.writeHead(200, { "Content-Type": "text/html" });
-                    res.end(renderMain(database));
-                }
+}); 
 
-            });
-        }
-        else {
-            res.writeHead(200, { "Content-Type": "text/html" });
-            res.end(renderMain(database));
-        }
-    }
-});
 
-const PORT = process.env.PORT || 8080;
-server.listen(PORT);
-  //the server object listens on port 8080
+
+app.listen(port, () => {
+    console.log(`Example app listening on port ${port}`)
+  })
+  
